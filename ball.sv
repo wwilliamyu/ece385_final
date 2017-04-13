@@ -16,7 +16,7 @@
 
 module  ball ( input         Reset, 
                              frame_clk,          // The clock indicating a new frame (~60Hz)
-					input logic [15:0] key,
+                    input logic [15:0] key,
                output [9:0]  BallX, BallY, BallS // Ball coordinates and size
               );
     
@@ -61,59 +61,54 @@ module  ball ( input         Reset,
         Ball_X_Motion_in = Ball_X_Motion;
         Ball_Y_Motion_in = Ball_Y_Motion;
         
-		  // W - up = 001A; 
-		  // D - right = 0007;
-		  // A - left = 0004;
-		  // S - down = 0016;
-		  case (key)
-				// up
-				16'h001A: begin
-					Ball_Y_Motion_in = (~(Ball_Y_Step) + 1'b1);
-					// prevent diagonal motion
-					Ball_X_Motion_in = 0;
-				end
-				// left
-				16'h0007: begin
-					Ball_X_Motion_in = Ball_X_Step;
-					// prevent diagonal motion
-					Ball_Y_Motion_in = 0;
-				end
-				// right
-				16'h0004: begin
-					Ball_X_Motion_in = (~(Ball_Y_Step) + 1'b1);
-					// prevent diagonal motion
-					Ball_Y_Motion_in = 0;
-				end
-				// down
-				16'h0016: begin
-					Ball_Y_Motion_in = Ball_Y_Step;
-					// prevent diagonal motion
-					Ball_X_Motion_in = 0;
-				end
-				default:;
-		  
-		  endcase
-		  
-		  
-		  
-		  
+          // W - up = 001A; 
+          // D - right = 0007;
+          // A - left = 0004;
+          // S - down = 0016;
+          case (key)
+                // up
+                16'h001A: begin
+                    Ball_Y_Motion_in = (~(Ball_Y_Step) + 1'b1);
+                    // prevent diagonal motion
+                    Ball_X_Motion_in = 0;
+                end
+                // left
+                16'h0007: begin
+                    Ball_X_Motion_in = Ball_X_Step;
+                    // prevent diagonal motion
+                    Ball_Y_Motion_in = 0;
+                end
+                // right
+                16'h0004: begin
+                    Ball_X_Motion_in = (~(Ball_Y_Step) + 1'b1);
+                    // prevent diagonal motion
+                    Ball_Y_Motion_in = 0;
+                end
+                default:
+                    Ball_Y_Motion_in = Ball_Y_Step;
+          
+          endcase
+          
+          
+          
+          
         // Be careful when using comparators with "logic" datatype becuase compiler treats 
         //   both sides of the operator UNSIGNED numbers. (unless with further type casting)
         // e.g. Ball_Y_Pos - Ball_Size <= Ball_Y_Min 
         // If Ball_Y_Pos is 0, then Ball_Y_Pos - Ball_Size will not be -4, but rather a large positive number.
         if( Ball_Y_Pos + Ball_Size >= Ball_Y_Max )  // Ball is at the bottom edge, BOUNCE!
-            Ball_Y_Motion_in = (~(Ball_Y_Step) + 1'b1);  // 2's complement.  
+            Ball_Y_Motion_in = 0;
         else if ( Ball_Y_Pos <= Ball_Y_Min + Ball_Size )  // Ball is at the top edge, BOUNCE!
             Ball_Y_Motion_in = Ball_Y_Step;
-		  else if ( Ball_X_Pos + Ball_Size >= Ball_X_Max) // ball is at right edge
-				Ball_X_Motion_in = (~(Ball_Y_Step) + 1'b1);
-		  else if ( Ball_X_Pos <= Ball_X_Min + Ball_Size ) // ball is at left edge
-				Ball_X_Motion_in = Ball_X_Step;
-		  else begin
-				// DO NOTHING LOL
-		  end
-		  
-		  
+          else if ( Ball_X_Pos + Ball_Size >= Ball_X_Max) // ball is at right edge
+                Ball_X_Motion_in = (~(Ball_Y_Step) + 1'b1);
+          else if ( Ball_X_Pos <= Ball_X_Min + Ball_Size ) // ball is at left edge
+                Ball_X_Motion_in = Ball_X_Step;
+          else begin
+                // DO NOTHING LOL
+          end
+          
+          
         // Update the ball's position with its motion
         Ball_X_Pos_in = Ball_X_Pos + Ball_X_Motion;
         Ball_Y_Pos_in = Ball_Y_Pos + Ball_Y_Motion;
