@@ -22,6 +22,7 @@ module  ball ( input         Reset,
     
     logic [9:0] Ball_X_Pos, Ball_X_Motion, Ball_Y_Pos, Ball_Y_Motion;
     logic [9:0] Ball_X_Pos_in, Ball_X_Motion_in, Ball_Y_Pos_in, Ball_Y_Motion_in;
+    logic jump;
      
     parameter [9:0] Ball_X_Center=320;  // Center position on the X axis
     parameter [9:0] Ball_Y_Center=240;  // Center position on the Y axis
@@ -32,6 +33,7 @@ module  ball ( input         Reset,
     parameter [9:0] Ball_X_Step=1;      // Step size on the X axis
     parameter [9:0] Ball_Y_Step=1;      // Step size on the Y axis
     parameter [9:0] Ball_Size=4;        // Ball size
+    parameter [9:0] jump_limit=100; 
     
     assign BallX = Ball_X_Pos;
     assign BallY = Ball_Y_Pos;
@@ -71,6 +73,8 @@ module  ball ( input         Reset,
                     Ball_Y_Motion_in = (~(Ball_Y_Step) + 1'b1);
                     // prevent diagonal motion
                     Ball_X_Motion_in = 0;
+                    if(jump == 0)
+                        jump = 1
                 end
                 // left
                 16'h0007: begin
@@ -96,17 +100,31 @@ module  ball ( input         Reset,
         //   both sides of the operator UNSIGNED numbers. (unless with further type casting)
         // e.g. Ball_Y_Pos - Ball_Size <= Ball_Y_Min 
         // If Ball_Y_Pos is 0, then Ball_Y_Pos - Ball_Size will not be -4, but rather a large positive number.
-        if( Ball_Y_Pos + Ball_Size >= Ball_Y_Max )  // Ball is at the bottom edge, BOUNCE!
+
+        if( Ball_Y_Pos + Ball_Size = Ball_Y_Max ) begin  // Ball is at the bottom edge, stay and set jump to 0
             Ball_Y_Motion_in = 0;
-        else if ( Ball_Y_Pos <= Ball_Y_Min + Ball_Size )  // Ball is at the top edge, BOUNCE!
-            Ball_Y_Motion_in = Ball_Y_Step;
-          else if ( Ball_X_Pos + Ball_Size >= Ball_X_Max) // ball is at right edge
-                Ball_X_Motion_in = (~(Ball_Y_Step) + 1'b1);
-          else if ( Ball_X_Pos <= Ball_X_Min + Ball_Size ) // ball is at left edge
-                Ball_X_Motion_in = Ball_X_Step;
-          else begin
-                // DO NOTHING LOL
-          end
+            jump = 0;
+        end
+
+        else if ( Ball_X_Pos + Ball_Size = Ball_X_Max) // ball is at right edge, stay
+            Ball_X_Motion_in = 0;
+
+        else if ( Ball_X_Pos = Ball_X_Min + Ball_Size ) // ball is at left edge, stay
+            Ball_X_Motion_in = 0;
+
+        else begin
+            end
+
+        if(jump == 1) begin
+            // Haven't hit jump limit yet, keep going up 
+            if(Ball_Y_Pos > jump_limit)
+                Ball_Y_Motion_in = (~(Ball_Y_Step) - 1'b1)
+            else begin
+                Ball_Y_Motion_in = (~(Ball_Y_Step) + 1'b1)
+            end
+        end
+
+
           
           
         // Update the ball's position with its motion
