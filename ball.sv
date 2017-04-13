@@ -22,8 +22,12 @@ module  ball ( input         Reset,
     
     logic [9:0] Ball_X_Pos, Ball_X_Motion, Ball_Y_Pos, Ball_Y_Motion;
     logic [9:0] Ball_X_Pos_in, Ball_X_Motion_in, Ball_Y_Pos_in, Ball_Y_Motion_in;
-    logic jump;
-     
+
+    // up : 1
+    // down : -1
+    // nothing : 0
+    logic jump = 0;
+
     parameter [9:0] Ball_X_Center=320;  // Center position on the X axis
     parameter [9:0] Ball_Y_Center=240;  // Center position on the Y axis
     parameter [9:0] Ball_X_Min=0;       // Leftmost point on the X axis
@@ -66,27 +70,26 @@ module  ball ( input         Reset,
           // W - up = 001A; 
           // D - right = 0007;
           // A - left = 0004;
-          // S - down = 0016;
           case (key)
                 // up
                 16'h001A: begin
                     Ball_Y_Motion_in = (~(Ball_Y_Step) + 1'b1);
                     // prevent diagonal motion
-                    Ball_X_Motion_in = 0;
+                    // Ball_X_Motion_in = 0;
                     if(jump == 0)
-                        jump = 1
+                        jump = 1;
                 end
                 // left
                 16'h0007: begin
                     Ball_X_Motion_in = Ball_X_Step;
                     // prevent diagonal motion
-                    Ball_Y_Motion_in = 0;
+                    // Ball_Y_Motion_in = 0;
                 end
                 // right
                 16'h0004: begin
                     Ball_X_Motion_in = (~(Ball_Y_Step) + 1'b1);
                     // prevent diagonal motion
-                    Ball_Y_Motion_in = 0;
+                    // Ball_Y_Motion_in = 0;
                 end
                 default:
                     Ball_Y_Motion_in = Ball_Y_Step;
@@ -101,15 +104,15 @@ module  ball ( input         Reset,
         // e.g. Ball_Y_Pos - Ball_Size <= Ball_Y_Min 
         // If Ball_Y_Pos is 0, then Ball_Y_Pos - Ball_Size will not be -4, but rather a large positive number.
 
-        if( Ball_Y_Pos + Ball_Size = Ball_Y_Max ) begin  // Ball is at the bottom edge, stay and set jump to 0
+        if( Ball_Y_Pos + Ball_Size >= Ball_Y_Max ) begin  // Ball is at the bottom edge, stay and set jump to 0
             Ball_Y_Motion_in = 0;
             jump = 0;
         end
 
-        else if ( Ball_X_Pos + Ball_Size = Ball_X_Max) // ball is at right edge, stay
+        else if ( Ball_X_Pos + Ball_Size >= Ball_X_Max) // ball is at right edge, stay
             Ball_X_Motion_in = 0;
 
-        else if ( Ball_X_Pos = Ball_X_Min + Ball_Size ) // ball is at left edge, stay
+        else if ( Ball_X_Pos <= Ball_X_Min + Ball_Size ) // ball is at left edge, stay
             Ball_X_Motion_in = 0;
 
         else begin
@@ -117,10 +120,19 @@ module  ball ( input         Reset,
 
         if(jump == 1) begin
             // Haven't hit jump limit yet, keep going up 
-            if(Ball_Y_Pos > jump_limit)
-                Ball_Y_Motion_in = (~(Ball_Y_Step) - 1'b1)
-            else begin
+            if(Ball_Y_Pos > jump_limit) begin
                 Ball_Y_Motion_in = (~(Ball_Y_Step) + 1'b1)
+            end
+            else if(Ball_Y_Pos == jump_limit) begin
+                jump = -1
+            end
+            else if (jump == -1) begin
+            // hit jump limit, start going down
+                Ball_Y_Motion_in = Ball_Y_Step;
+                jump = -1 ;
+            end
+            else begin
+                // do nothing 
             end
         end
 
@@ -131,17 +143,6 @@ module  ball ( input         Reset,
         Ball_X_Pos_in = Ball_X_Pos + Ball_X_Motion;
         Ball_Y_Pos_in = Ball_Y_Pos + Ball_Y_Motion;
         
-    /**************************************************************************************
-        ATTENTION! Please answer the following quesiton in your lab report! Points will be allocated for the answers!
-        Hidden Question #2/2:
-          Notice that Ball_Y_Pos is updated using Ball_Y_Motion. 
-          Will the new value of Ball_Y_Motion be used when Ball_Y_Pos is updated, or the old? 
-          What is the difference between writing
-            "Ball_Y_Pos_in = Ball_Y_Pos + Ball_Y_Motion;" and 
-            "Ball_Y_Pos_in = Ball_Y_Pos + Ball_Y_Motion_in;"?
-          How will this impact behavior of the ball during a bounce, and how might that interact with a response to a keypress?
-          Give an answer in your Post-Lab.
-    **************************************************************************************/
         
     end
     
